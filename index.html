@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upbit KRW Market Scanner</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Upbit KRW Market Scanner</p>
+          <h1>KRW 마켓 조건 검색</h1>
+        </div>
+        <div class="status-pill" id="connectionStatus">준비 중</div>
+      </header>
+
+      <section class="btc-strip" aria-label="비트코인 시세">
+        <div>
+          <span class="label">BTC / KRW</span>
+          <strong id="btcPrice">-</strong>
+        </div>
+        <div>
+          <span class="label">당일 변동률</span>
+          <strong id="btcChangeRate">-</strong>
+        </div>
+        <div>
+          <span class="label">당일 변동액</span>
+          <strong id="btcChangePrice">-</strong>
+        </div>
+        <button id="btcChartButton" type="button">BTC 차트</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel">
+          <div class="panel-head">
+            <h2>검색 조건</h2>
+            <button class="icon-button" id="resetButton" type="button" title="조건 초기화">↺</button>
+          </div>
+
+          <p class="notice">검색 대상은 업비트 KRW 마켓 전체입니다.</p>
+
+          <label>
+            코인명 또는 심볼
+            <input id="keyword" type="search" placeholder="예: BTC, 비트코인" autocomplete="off" />
+          </label>
+
+          <div class="range-row">
+            <label>
+              24시간 변동률 최소(%)
+              <input id="minChange" type="number" step="0.1" value="3" />
+            </label>
+            <label>
+              24시간 변동률 최대(%)
+              <input id="maxChange" type="number" step="0.1" placeholder="제한 없음" />
+            </label>
+          </div>
+
+          <label>
+            24시간 거래대금 최소(KRW)
+            <input id="minTradeValue" type="number" step="100000000" value="10000000000" />
+          </label>
+
+          <div class="range-row">
+            <label>
+              현재가 최소
+              <input id="minPrice" type="number" step="1" placeholder="제한 없음" />
+            </label>
+            <label>
+              현재가 최대
+              <input id="maxPrice" type="number" step="1" placeholder="제한 없음" />
+            </label>
+          </div>
+
+          <div class="range-row">
+            <label>
+              이동평균 기준
+              <select id="maMode">
+                <option value="off">사용 안 함</option>
+                <option value="above">현재가가 MA 위</option>
+                <option value="below">현재가가 MA 아래</option>
+              </select>
+            </label>
+            <label>
+              이동평균 기간
+              <select id="maPeriod">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="60">60</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            거래량 배수 최소
+            <input id="minVolumeRatio" type="number" min="0" step="0.1" placeholder="예: 2" />
+          </label>
+
+          <label>
+            결과 정렬
+            <select id="sortBy">
+              <option value="tradeValue">거래대금순</option>
+              <option value="changeRate">변동률순</option>
+              <option value="volumeRatio">거래량 배수순</option>
+              <option value="drawdown">고가 대비 하락순</option>
+            </select>
+          </label>
+
+          <div class="button-row">
+            <button class="primary" id="searchButton" type="button">검색</button>
+            <button id="exportButton" type="button">CSV</button>
+          </div>
+        </aside>
+
+        <section class="chart-panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="chartTitle">BTCUSDT 차트</h2>
+              <p>Binance 달러 기준 · 이동평균선과 거래량 표시</p>
+            </div>
+          </div>
+          <div class="chart-box" id="tradingviewChart"></div>
+        </section>
+      </section>
+
+      <section class="result-section">
+        <div class="result-head">
+          <div>
+            <h2>검색 결과</h2>
+            <p id="resultMeta">아직 검색하지 않았습니다.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>코인</th>
+                <th>현재가</th>
+                <th>24시간</th>
+                <th>변동액</th>
+                <th>거래대금</th>
+                <th>고가 대비</th>
+                <th>MA</th>
+                <th>거래량 배수</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="results">
+              <tr>
+                <td colspan="9" class="empty">조건을 설정하고 검색을 눌러주세요.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
