@@ -1,4 +1,4 @@
-const API_BASE = "https://api.upbit.com/v1";
+const API_BASE = "https://upbit-api-proxy.anyspirit.workers.dev";
 const TRADINGVIEW_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 
 const $ = (selector) => document.querySelector(selector);
