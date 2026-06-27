@@ -3,158 +3,238 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Upbit KRW Market Scanner</title>
+    <title>Upbit Pattern Scanner</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Upbit KRW Market Scanner</p>
-          <h1>KRW 마켓 조건 검색</h1>
+          <p class="eyebrow">Upbit Pattern Scanner</p>
+          <h1>패턴이 갖춰진 KRW 코인 검색기</h1>
         </div>
         <div class="status-pill" id="connectionStatus">준비 중</div>
       </header>
 
-      <section class="btc-strip" aria-label="비트코인 시세">
-        <div>
+      <section class="btc-board" aria-label="비트코인 상태">
+        <div class="btc-card">
           <span class="label">BTC / KRW</span>
           <strong id="btcPrice">-</strong>
         </div>
-        <div>
+        <div class="btc-card">
           <span class="label">당일 변동률</span>
           <strong id="btcChangeRate">-</strong>
         </div>
-        <div>
+        <div class="btc-card">
           <span class="label">당일 변동액</span>
           <strong id="btcChangePrice">-</strong>
+        </div>
+        <div class="btc-card">
+          <span class="label">BTC MA 상태</span>
+          <strong id="btcMaState">-</strong>
         </div>
         <button id="btcChartButton" type="button">BTC 차트</button>
       </section>
 
-      <section class="workspace">
-        <aside class="panel">
-          <div class="panel-head">
-            <h2>검색 조건</h2>
-            <button class="icon-button" id="resetButton" type="button" title="조건 초기화">↺</button>
-          </div>
+      <nav class="tabs" aria-label="화면 전환">
+        <button class="tab active" data-tab="scanner" type="button">검색기</button>
+        <button class="tab" data-tab="notes" type="button">매매 메모</button>
+      </nav>
 
-          <p class="notice">검색 대상은 업비트 KRW 마켓 전체입니다.</p>
+      <section class="tab-page active" id="scannerPage">
+        <section class="workspace">
+          <aside class="panel">
+            <div class="panel-head">
+              <h2>검색 조건</h2>
+              <button class="icon-button" id="resetButton" type="button" title="조건 초기화">↺</button>
+            </div>
 
-          <label>
-            코인명 또는 심볼
-            <input id="keyword" type="search" placeholder="예: BTC, 비트코인" autocomplete="off" />
-          </label>
+            <p class="notice">검색 대상은 업비트 KRW 마켓입니다. 이동평균은 일봉 기준입니다.</p>
 
-          <div class="range-row">
             <label>
-              24시간 변동률 최소(%)
-              <input id="minChange" type="number" step="0.1" value="3" />
+              코인 그룹
+              <select id="coinGroup">
+                <option value="all">전체 KRW</option>
+                <option value="major">메이저코인</option>
+                <option value="kimchi">김치코인</option>
+                <option value="new">신규코인</option>
+                <option value="top20">Top20코인</option>
+              </select>
             </label>
-            <label>
-              24시간 변동률 최대(%)
-              <input id="maxChange" type="number" step="0.1" placeholder="제한 없음" />
-            </label>
-          </div>
 
-          <label>
-            24시간 거래대금 최소(KRW)
-            <input id="minTradeValue" type="number" step="100000000" value="10000000000" />
-          </label>
-
-          <div class="range-row">
             <label>
-              현재가 최소
-              <input id="minPrice" type="number" step="1" placeholder="제한 없음" />
+              코인명, 심볼, 닉네임
+              <input id="keyword" type="search" placeholder="예: BTC, 비트코인, 대장" autocomplete="off" />
             </label>
-            <label>
-              현재가 최대
-              <input id="maxPrice" type="number" step="1" placeholder="제한 없음" />
-            </label>
-          </div>
 
-          <div class="range-row">
+            <div class="range-row">
+              <label>
+                24시간 변동률 최소(%)
+                <input id="minChange" type="number" step="0.1" placeholder="제한 없음" />
+              </label>
+              <label>
+                24시간 변동률 최대(%)
+                <input id="maxChange" type="number" step="0.1" placeholder="제한 없음" />
+              </label>
+            </div>
+
             <label>
-              이동평균 기준
-              <select id="maMode">
+              24시간 거래대금 최소(KRW)
+              <input id="minTradeValue" type="number" step="100000000" value="10000000000" />
+            </label>
+
+            <label>
+              이동평균 배열
+              <select id="maStack">
                 <option value="off">사용 안 함</option>
-                <option value="above">현재가가 MA 위</option>
-                <option value="below">현재가가 MA 아래</option>
+                <option value="bull">정배열: MA20 &gt; MA60 &gt; MA120 &gt; MA365</option>
+                <option value="bear">역배열: MA20 &lt; MA60 &lt; MA120 &lt; MA365</option>
               </select>
             </label>
+
+            <div class="ma-grid">
+              <label>
+                MA20
+                <select id="ma20Mode">
+                  <option value="off">무관</option>
+                  <option value="above">현재가 위</option>
+                  <option value="below">현재가 아래</option>
+                </select>
+              </label>
+              <label>
+                MA60
+                <select id="ma60Mode">
+                  <option value="off">무관</option>
+                  <option value="above">현재가 위</option>
+                  <option value="below">현재가 아래</option>
+                </select>
+              </label>
+              <label>
+                MA120
+                <select id="ma120Mode">
+                  <option value="off">무관</option>
+                  <option value="above">현재가 위</option>
+                  <option value="below">현재가 아래</option>
+                </select>
+              </label>
+              <label>
+                MA365
+                <select id="ma365Mode">
+                  <option value="off">무관</option>
+                  <option value="above">현재가 위</option>
+                  <option value="below">현재가 아래</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="range-row">
+              <label>
+                거래량 배수 최소
+                <input id="minVolumeRatio" type="number" min="0" step="0.1" placeholder="예: 1.5" />
+              </label>
+              <label>
+                거래량 평균 기간
+                <select id="volumePeriod">
+                  <option value="20">20일</option>
+                  <option value="60">60일</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="range-row">
+              <label>
+                매물대 조건
+                <select id="levelMode">
+                  <option value="off">사용 안 함</option>
+                  <option value="breakout">저항 돌파</option>
+                  <option value="support">지지 확인</option>
+                </select>
+              </label>
+              <label>
+                허용 오차(%)
+                <input id="levelTolerance" type="number" min="0" step="0.1" value="2" />
+              </label>
+            </div>
+
             <label>
-              이동평균 기간
-              <select id="maPeriod">
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20" selected>20</option>
-                <option value="60">60</option>
+              결과 정렬
+              <select id="sortBy">
+                <option value="tradeValue">거래대금순</option>
+                <option value="volumeRatio">거래량 배수순</option>
+                <option value="maDistance">MA20 근접순</option>
+                <option value="changeRate">변동률순</option>
               </select>
             </label>
-          </div>
 
-          <label>
-            거래량 배수 최소
-            <input id="minVolumeRatio" type="number" min="0" step="0.1" placeholder="예: 2" />
-          </label>
+            <div class="button-row">
+              <button class="primary" id="searchButton" type="button">검색</button>
+              <button id="exportButton" type="button">CSV</button>
+            </div>
+          </aside>
 
-          <label>
-            결과 정렬
-            <select id="sortBy">
-              <option value="tradeValue">거래대금순</option>
-              <option value="changeRate">변동률순</option>
-              <option value="volumeRatio">거래량 배수순</option>
-              <option value="drawdown">고가 대비 하락순</option>
-            </select>
-          </label>
+          <section class="chart-panel">
+            <div class="panel-head">
+              <div>
+                <h2 id="chartTitle">BTCUSDT 차트</h2>
+                <p>Binance 달러 기준 · 이동평균선과 거래량 참고</p>
+              </div>
+            </div>
+            <div class="chart-box" id="tradingviewChart"></div>
+          </section>
+        </section>
 
-          <div class="button-row">
-            <button class="primary" id="searchButton" type="button">검색</button>
-            <button id="exportButton" type="button">CSV</button>
-          </div>
-        </aside>
-
-        <section class="chart-panel">
-          <div class="panel-head">
+        <section class="result-section">
+          <div class="result-head">
             <div>
-              <h2 id="chartTitle">BTCUSDT 차트</h2>
-              <p>Binance 달러 기준 · 이동평균선과 거래량 표시</p>
+              <h2>검색 결과</h2>
+              <p id="resultMeta">아직 검색하지 않았습니다.</p>
             </div>
           </div>
-          <div class="chart-box" id="tradingviewChart"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>코인</th>
+                  <th>현재가</th>
+                  <th>24시간</th>
+                  <th>거래대금</th>
+                  <th>MA20</th>
+                  <th>MA60</th>
+                  <th>MA120</th>
+                  <th>MA365</th>
+                  <th>거래량</th>
+                  <th>매물대</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="results">
+                <tr>
+                  <td colspan="11" class="empty">조건을 설정하고 검색을 눌러주세요.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </section>
 
-      <section class="result-section">
-        <div class="result-head">
-          <div>
-            <h2>검색 결과</h2>
-            <p id="resultMeta">아직 검색하지 않았습니다.</p>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>코인</th>
-                <th>현재가</th>
-                <th>24시간</th>
-                <th>변동액</th>
-                <th>거래대금</th>
-                <th>고가 대비</th>
-                <th>MA</th>
-                <th>거래량 배수</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="results">
-              <tr>
-                <td colspan="9" class="empty">조건을 설정하고 검색을 눌러주세요.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <section class="tab-page" id="notesPage">
+        <section class="notes-layout">
+          <article class="memo-panel">
+            <div class="panel-head">
+              <h2>매매원칙</h2>
+              <span id="rulesSavedAt" class="saved-at">저장 대기</span>
+            </div>
+            <textarea id="tradingRules" placeholder="예: BTC 상태가 나쁠 때는 검색 결과가 좋아도 진입하지 않는다."></textarea>
+          </article>
+          <article class="memo-panel">
+            <div class="panel-head">
+              <h2>매매팁</h2>
+              <span id="tipsSavedAt" class="saved-at">저장 대기</span>
+            </div>
+            <textarea id="tradingTips" placeholder="반복해서 확인할 팁이나 관찰 기록을 남겨두세요."></textarea>
+          </article>
+        </section>
       </section>
     </main>
 

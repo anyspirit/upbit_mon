@@ -27,7 +27,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -51,18 +52,19 @@ a {
 }
 
 .app-shell {
-  width: min(1240px, calc(100% - 28px));
+  width: min(1280px, calc(100% - 28px));
   margin: 0 auto;
   padding: 24px 0 36px;
 }
 
 .topbar,
-.btc-strip,
+.btc-board,
 .workspace,
 .panel-head,
 .range-row,
 .button-row,
-.result-head {
+.result-head,
+.tabs {
   display: flex;
   gap: 14px;
 }
@@ -113,24 +115,25 @@ h2 {
   font-size: 13px;
 }
 
-.btc-strip,
+.btc-board,
 .panel,
 .chart-panel,
-.result-section {
+.result-section,
+.memo-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
 }
 
-.btc-strip {
+.btc-board {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
   padding: 15px 18px;
 }
 
-.btc-strip > div {
+.btc-card {
   display: grid;
   gap: 5px;
 }
@@ -141,8 +144,31 @@ h2 {
   font-weight: 700;
 }
 
-.btc-strip strong {
+.btc-card strong {
   font-size: 20px;
+}
+
+.tabs {
+  margin-bottom: 14px;
+}
+
+.tab {
+  padding: 0 18px;
+  font-weight: 700;
+}
+
+.tab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.tab-page {
+  display: none;
+}
+
+.tab-page.active {
+  display: block;
 }
 
 .workspace {
@@ -151,7 +177,7 @@ h2 {
 }
 
 .panel {
-  flex: 0 0 370px;
+  flex: 0 0 390px;
   padding: 18px;
 }
 
@@ -178,7 +204,7 @@ h2 {
 
 .chart-box {
   width: 100%;
-  height: 430px;
+  height: 460px;
   margin-top: 14px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -196,7 +222,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
@@ -206,8 +233,16 @@ select {
   color: var(--ink);
 }
 
+textarea {
+  min-height: 520px;
+  padding: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 2px solid rgba(8, 125, 115, 0.16);
   border-color: var(--accent);
 }
@@ -215,6 +250,12 @@ select:focus {
 .range-row > label,
 .button-row button {
   flex: 1;
+}
+
+.ma-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .primary {
@@ -252,7 +293,7 @@ select:focus {
 
 table {
   width: 100%;
-  min-width: 1050px;
+  min-width: 1320px;
   border-collapse: collapse;
 }
 
@@ -292,6 +333,18 @@ td {
   font-size: 12px;
 }
 
+.level-editor {
+  display: grid;
+  grid-template-columns: 96px 96px;
+  gap: 6px;
+}
+
+.level-editor input {
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
 .gain {
   color: var(--gain);
   font-weight: 700;
@@ -308,6 +361,21 @@ td {
   text-align: center;
 }
 
+.notes-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.memo-panel {
+  padding: 18px;
+}
+
+.saved-at {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .toast {
   position: fixed;
   right: 16px;
@@ -322,19 +390,20 @@ td {
   z-index: 10;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 960px) {
   .topbar,
-  .btc-strip,
+  .btc-board,
   .workspace,
   .range-row,
   .button-row,
-  .result-head {
+  .result-head,
+  .notes-layout {
     display: grid;
     grid-template-columns: 1fr;
   }
 
   .app-shell {
-    width: min(100% - 20px, 1240px);
+    width: min(100% - 20px, 1280px);
     padding-top: 16px;
   }
 
@@ -343,7 +412,7 @@ td {
   }
 
   .chart-box {
-    height: 360px;
+    height: 380px;
   }
 
   .status-pill {
