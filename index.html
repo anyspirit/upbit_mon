@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upbit Signal Watch</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Upbit Signal Watch</p>
+          <h1>조건에 맞는 코인을 찾고 알림을 받습니다</h1>
+        </div>
+        <div class="status-pill" id="connectionStatus">대기 중</div>
+      </header>
+
+      <section class="control-grid" aria-label="검색 조건">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>검색 조건</h2>
+            <button class="icon-button" id="resetButton" type="button" title="조건 초기화">↺</button>
+          </div>
+
+          <label>
+            거래 마켓
+            <select id="marketType">
+              <option value="KRW">KRW</option>
+              <option value="BTC">BTC</option>
+              <option value="USDT">USDT</option>
+              <option value="ALL">전체</option>
+            </select>
+          </label>
+
+          <label>
+            코인명 또는 심볼
+            <input id="keyword" type="search" placeholder="예: BTC, 비트코인" autocomplete="off" />
+          </label>
+
+          <div class="range-row">
+            <label>
+              24시간 변동률 최소(%)
+              <input id="minChange" type="number" step="0.1" value="3" />
+            </label>
+            <label>
+              24시간 변동률 최대(%)
+              <input id="maxChange" type="number" step="0.1" placeholder="제한 없음" />
+            </label>
+          </div>
+
+          <div class="range-row">
+            <label>
+              24시간 거래대금 최소
+              <input id="minTradeValue" type="number" step="1000000" value="10000000000" />
+            </label>
+            <label>
+              현재가 최소
+              <input id="minPrice" type="number" step="1" placeholder="제한 없음" />
+            </label>
+          </div>
+
+          <div class="range-row">
+            <label>
+              RSI 조건
+              <select id="rsiMode">
+                <option value="off">사용 안 함</option>
+                <option value="below">이하</option>
+                <option value="above">이상</option>
+              </select>
+            </label>
+            <label>
+              RSI 기준값
+              <input id="rsiValue" type="number" min="1" max="99" step="1" value="30" />
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button class="primary" id="searchButton" type="button">검색</button>
+            <button id="saveRuleButton" type="button">이 조건 저장</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>알림</h2>
+            <label class="switch">
+              <input id="watchToggle" type="checkbox" />
+              <span>감시</span>
+            </label>
+          </div>
+
+          <label>
+            확인 주기(초)
+            <input id="pollSeconds" type="number" min="20" step="5" value="60" />
+          </label>
+
+          <button id="permissionButton" type="button">브라우저 알림 허용</button>
+
+          <div class="summary">
+            <span>저장된 조건</span>
+            <strong id="ruleCount">0개</strong>
+          </div>
+
+          <div class="rules" id="rules"></div>
+        </div>
+      </section>
+
+      <section class="result-section">
+        <div class="result-head">
+          <div>
+            <h2>검색 결과</h2>
+            <p id="resultMeta">아직 검색하지 않았습니다.</p>
+          </div>
+          <button id="exportButton" type="button">CSV 내보내기</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>코인</th>
+                <th>현재가</th>
+                <th>24시간</th>
+                <th>거래대금</th>
+                <th>고가 대비</th>
+                <th>RSI</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="results">
+              <tr>
+                <td colspan="7" class="empty">조건을 설정하고 검색을 눌러주세요.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <template id="ruleTemplate">
+      <article class="rule">
+        <div>
+          <strong class="rule-title"></strong>
+          <p class="rule-desc"></p>
+        </div>
+        <button class="icon-button delete-rule" type="button" title="조건 삭제">×</button>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
