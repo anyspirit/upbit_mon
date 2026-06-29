@@ -1,0 +1,15 @@
+name = "upbit-pattern-api"
+main = "src/index.js"
+compatibility_date = "2026-06-29"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "upbit_pattern"
+database_id = "replace-with-your-d1-database-id"
+
+[vars]
+UPBIT_API_BASE = "https://api.upbit.com/v1"
+REFRESH_LIMIT = "5"

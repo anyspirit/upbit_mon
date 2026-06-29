@@ -1,8 +1,24 @@
-const API_BASE = "https://upbit-api-proxy.anyspirit.workers.dev/v1";
+const DEFAULT_DATA_API_BASE = "https://upbit-pattern-api.anyspirit.workers.dev";
+const DATA_API_BASE = resolveDataApiBase();
+const API_BASE = `${DATA_API_BASE}/v1`;
+const CANDLE_API_BASE = `${DATA_API_BASE}/api`;
 const TRADINGVIEW_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 const LEVELS_KEY = "upbit-pattern-levels";
 const MEMO_KEY = "upbit-pattern-memo-cards";
 const COIN_DB_KEY = "upbit-pattern-coin-db";
+const CANDLE_CACHE_KEY = "upbit-pattern-candle-cache";
+const HOUR_CANDLE_CACHE_MS = 20 * 60 * 1000;
+const DAY_CANDLE_CACHE_MS = 6 * 60 * 60 * 1000;
+
+function resolveDataApiBase() {
+  const params = new URLSearchParams(window.location.search);
+  const apiFromUrl = params.get("api");
+  if (apiFromUrl) {
+    localStorage.setItem("upbit-pattern-api-base", apiFromUrl.replace(/\/$/, ""));
+    return apiFromUrl.replace(/\/$/, "");
+  }
+  return localStorage.getItem("upbit-pattern-api-base") || DEFAULT_DATA_API_BASE;
+}
 
 const DEFAULT_COIN_DB = {
   "KRW-BTC": { nickname: "대장", groups: ["major", "top20"] },
@@ -63,6 +79,7 @@ let currentRows = [];
 let levels = readJson(LEVELS_KEY, {});
 let memoCards = readMemoCards();
 let coinDb = { ...DEFAULT_COIN_DB, ...readJson(COIN_DB_KEY, {}) };
+let candleCache = readJson(CANDLE_CACHE_KEY, {});
 
 function readJson(key, fallback) {
   try {
@@ -126,6 +143,14 @@ async function fetchJson(path) {
   return response.json();
 }
 
+async function fetchBackendJson(path) {
+  const response = await fetch(`${CANDLE_API_BASE}${path}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`Backend API ${response.status}`);
+  return response.json();
+}
+
 async function loadMarkets() {
   setStatus("마켓 불러오는 중");
   const allMarkets = await fetchJson("/market/all?isDetails=false");
@@ -135,7 +160,7 @@ async function loadMarkets() {
 
 async function loadBitcoinSummary() {
   const [btc] = await fetchJson("/ticker?markets=KRW-BTC");
-  const candles = await fetchDayCandles("KRW-BTC", 365);
+  const candles = await fetchDayCandles("KRW-BTC", 60);
   const ma = calculateMovingAverages(candles);
   const changeRate = btc.signed_change_rate * 100;
   const changeClass = changeRate >= 0 ? "gain" : "loss";
@@ -176,6 +201,14 @@ async function fetchTickers(marketCodes) {
 }
 
 async function fetchDayCandles(market, targetCount) {
+  return fetchCachedCandles({
+    key: `day:${market}:${targetCount}`,
+    ttlMs: DAY_CANDLE_CACHE_MS,
+    load: () => fetchStoredCandles(market, "1d", targetCount).catch(() => fetchRawDayCandles(market, targetCount)),
+  });
+}
+
+async function fetchRawDayCandles(market, targetCount) {
   const candles = [];
   let to = "";
 
@@ -193,6 +226,41 @@ async function fetchDayCandles(market, targetCount) {
 }
 
 async function fetchMinuteCandles(market, unit, targetCount) {
+  return fetchCachedCandles({
+    key: `minute:${unit}:${market}:${targetCount}`,
+    ttlMs: unit === 60 ? HOUR_CANDLE_CACHE_MS : 5 * 60 * 1000,
+    load: () =>
+      unit === 60
+        ? fetchStoredCandles(market, "1h", targetCount).catch(() => fetchRawMinuteCandles(market, unit, targetCount))
+        : fetchRawMinuteCandles(market, unit, targetCount),
+  });
+}
+
+async function fetchStoredCandles(market, timeframe, targetCount) {
+  const data = await fetchBackendJson(`/candles?market=${encodeURIComponent(market)}&timeframe=${encodeURIComponent(timeframe)}`);
+  const candles = Array.isArray(data.candles) ? data.candles : [];
+
+  if (candles.length < targetCount) {
+    throw new Error(`Stored candles are not ready: ${market} ${timeframe}`);
+  }
+
+  return candles.slice(-targetCount).map(normalizeStoredCandle);
+}
+
+function normalizeStoredCandle(candle) {
+  return {
+    candle_date_time_utc: candle.utc,
+    candle_date_time_kst: candle.kst,
+    opening_price: candle.open,
+    high_price: candle.high,
+    low_price: candle.low,
+    trade_price: candle.close,
+    candle_acc_trade_volume: candle.volume,
+    candle_acc_trade_price: candle.value,
+  };
+}
+
+async function fetchRawMinuteCandles(market, unit, targetCount) {
   const candles = [];
   let to = "";
 
@@ -207,6 +275,28 @@ async function fetchMinuteCandles(market, unit, targetCount) {
   }
 
   return candles.slice(0, targetCount).reverse();
+}
+
+async function fetchCachedCandles({ key, ttlMs, load }) {
+  const cached = candleCache[key];
+  const now = Date.now();
+
+  if (cached && now - cached.savedAt < ttlMs && Array.isArray(cached.candles)) {
+    return cached.candles;
+  }
+
+  const candles = await load();
+  candleCache[key] = { savedAt: now, candles };
+  writeCandleCache();
+  return candles;
+}
+
+function writeCandleCache() {
+  const entries = Object.entries(candleCache)
+    .sort(([, a], [, b]) => b.savedAt - a.savedAt)
+    .slice(0, 240);
+  candleCache = Object.fromEntries(entries);
+  writeJson(CANDLE_CACHE_KEY, candleCache);
 }
 
 async function enrichRowsWithPatternData(rows, rule) {
