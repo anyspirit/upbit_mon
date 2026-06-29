@@ -1,7 +1,7 @@
 const API_BASE = "https://upbit-api-proxy.anyspirit.workers.dev/v1";
 const TRADINGVIEW_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 const LEVELS_KEY = "upbit-pattern-levels";
-const MEMO_KEY = "upbit-pattern-memos";
+const MEMO_KEY = "upbit-pattern-memo-cards";
 const COIN_DB_KEY = "upbit-pattern-coin-db";
 
 const DEFAULT_COIN_DB = {
@@ -47,16 +47,22 @@ const els = {
   tradingviewChart: $("#tradingviewChart"),
   results: $("#results"),
   resultMeta: $("#resultMeta"),
-  tradingRules: $("#tradingRules"),
-  tradingTips: $("#tradingTips"),
-  rulesSavedAt: $("#rulesSavedAt"),
-  tipsSavedAt: $("#tipsSavedAt"),
+  memoType: $("#memoType"),
+  memoTitle: $("#memoTitle"),
+  memoBody: $("#memoBody"),
+  addMemoButton: $("#addMemoButton"),
+  exportMemosButton: $("#exportMemosButton"),
+  memoSavedAt: $("#memoSavedAt"),
+  ruleMemoList: $("#ruleMemoList"),
+  tipMemoList: $("#tipMemoList"),
+  ruleMemoCount: $("#ruleMemoCount"),
+  tipMemoCount: $("#tipMemoCount"),
 };
 
 let markets = [];
 let currentRows = [];
 let levels = readJson(LEVELS_KEY, {});
-let memos = readJson(MEMO_KEY, { rules: "", tips: "" });
+let memoCards = readMemoCards();
 let coinDb = { ...DEFAULT_COIN_DB, ...readJson(COIN_DB_KEY, {}) };
 
 function readJson(key, fallback) {
@@ -69,6 +75,12 @@ function readJson(key, fallback) {
 
 function writeJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+function readMemoCards() {
+  const saved = readJson(MEMO_KEY, null);
+  if (Array.isArray(saved)) return saved;
+  return Array.isArray(window.DEFAULT_MEMO_CARDS) ? window.DEFAULT_MEMO_CARDS : [];
 }
 
 function setStatus(text, tone = "idle") {
@@ -521,18 +533,103 @@ function setupTabs() {
 }
 
 function setupMemos() {
-  els.tradingRules.value = memos.rules ?? "";
-  els.tradingTips.value = memos.tips ?? "";
-
-  els.tradingRules.addEventListener("input", () => saveMemo("rules", els.tradingRules.value, els.rulesSavedAt));
-  els.tradingTips.addEventListener("input", () => saveMemo("tips", els.tradingTips.value, els.tipsSavedAt));
+  renderMemoCards();
+  els.addMemoButton.addEventListener("click", addMemoCard);
+  els.exportMemosButton.addEventListener("click", exportMemoCards);
 }
 
-function saveMemo(type, value, statusEl) {
-  memos = { ...memos, [type]: value };
-  writeJson(MEMO_KEY, memos);
+function addMemoCard() {
+  const title = els.memoTitle.value.trim();
+  const body = els.memoBody.value.trim();
+  if (!title || !body) {
+    toast("제목과 내용을 입력해주세요.");
+    return;
+  }
+
+  memoCards = [
+    {
+      id: crypto.randomUUID(),
+      type: els.memoType.value,
+      title,
+      body,
+      createdAt: new Date().toISOString(),
+    },
+    ...memoCards,
+  ];
+  saveMemoCards();
+  els.memoTitle.value = "";
+  els.memoBody.value = "";
+  renderMemoCards();
+}
+
+function deleteMemoCard(id) {
+  memoCards = memoCards.filter((memo) => memo.id !== id);
+  saveMemoCards();
+  renderMemoCards();
+}
+
+function saveMemoCards() {
+  writeJson(MEMO_KEY, memoCards);
   const now = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-  statusEl.textContent = `${now} 저장됨`;
+  els.memoSavedAt.textContent = `${now} 저장됨`;
+}
+
+function renderMemoCards() {
+  const rules = memoCards.filter((memo) => memo.type === "rule");
+  const tips = memoCards.filter((memo) => memo.type === "tip");
+  els.ruleMemoCount.textContent = `${rules.length}개`;
+  els.tipMemoCount.textContent = `${tips.length}개`;
+  renderMemoList(els.ruleMemoList, rules);
+  renderMemoList(els.tipMemoList, tips);
+}
+
+function renderMemoList(container, items) {
+  if (items.length === 0) {
+    container.innerHTML = `<p class="empty">저장된 카드가 없습니다.</p>`;
+    return;
+  }
+
+  container.innerHTML = items
+    .map(
+      (memo) => `
+        <article class="memo-card">
+          <div class="memo-card-head">
+            <strong>${escapeHtml(memo.title)}</strong>
+            <button class="icon-button" data-delete-memo="${memo.id}" type="button" title="삭제">×</button>
+          </div>
+          <p>${escapeHtml(memo.body).replace(/\n/g, "<br />")}</p>
+          <span>${formatDate(memo.createdAt)}</span>
+        </article>
+      `
+    )
+    .join("");
+
+  container.querySelectorAll("[data-delete-memo]").forEach((button) => {
+    button.addEventListener("click", () => deleteMemoCard(button.dataset.deleteMemo));
+  });
+}
+
+function exportMemoCards() {
+  const source = `window.DEFAULT_MEMO_CARDS = ${JSON.stringify(memoCards, null, 2)};\n`;
+  const blob = new Blob([source], { type: "application/javascript;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "memo-data.js";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (char) => {
+    const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return entities[char];
+  });
 }
 
 function toast(message) {

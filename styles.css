@@ -234,7 +234,7 @@ textarea {
 }
 
 textarea {
-  min-height: 520px;
+  min-height: 150px;
   padding: 14px;
   line-height: 1.6;
   resize: vertical;
@@ -367,8 +367,53 @@ td {
   gap: 14px;
 }
 
+.memo-toolbar {
+  margin-bottom: 14px;
+}
+
 .memo-panel {
   padding: 18px;
+}
+
+.memo-form-grid {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+}
+
+.memo-list {
+  display: grid;
+  gap: 12px;
+}
+
+.memo-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.memo-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.memo-card strong {
+  font-size: 15px;
+}
+
+.memo-card p {
+  margin: 10px 0 12px;
+  color: var(--ink);
+  line-height: 1.55;
+  white-space: normal;
+}
+
+.memo-card span {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .saved-at {
@@ -397,7 +442,8 @@ td {
   .range-row,
   .button-row,
   .result-head,
-  .notes-layout {
+  .notes-layout,
+  .memo-form-grid {
     display: grid;
     grid-template-columns: 1fr;
   }

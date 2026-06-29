@@ -219,25 +219,56 @@
       </section>
 
       <section class="tab-page" id="notesPage">
+        <section class="memo-toolbar">
+          <article class="memo-panel memo-form">
+            <div class="panel-head">
+              <h2>메모 추가</h2>
+              <span id="memoSavedAt" class="saved-at">저장 대기</span>
+            </div>
+            <div class="memo-form-grid">
+              <label>
+                분류
+                <select id="memoType">
+                  <option value="rule">매매원칙</option>
+                  <option value="tip">매매팁</option>
+                </select>
+              </label>
+              <label>
+                제목
+                <input id="memoTitle" type="text" placeholder="예: BTC 우선 확인" />
+              </label>
+            </div>
+            <label>
+              내용
+              <textarea id="memoBody" placeholder="반복해서 확인할 원칙이나 팁을 적어두세요."></textarea>
+            </label>
+            <div class="button-row">
+              <button class="primary" id="addMemoButton" type="button">카드 저장</button>
+              <button id="exportMemosButton" type="button">JSON 내보내기</button>
+            </div>
+          </article>
+        </section>
+
         <section class="notes-layout">
           <article class="memo-panel">
             <div class="panel-head">
               <h2>매매원칙</h2>
-              <span id="rulesSavedAt" class="saved-at">저장 대기</span>
+              <span class="saved-at" id="ruleMemoCount">0개</span>
             </div>
-            <textarea id="tradingRules" placeholder="예: BTC 상태가 나쁠 때는 검색 결과가 좋아도 진입하지 않는다."></textarea>
+            <div class="memo-list" id="ruleMemoList"></div>
           </article>
           <article class="memo-panel">
             <div class="panel-head">
               <h2>매매팁</h2>
-              <span id="tipsSavedAt" class="saved-at">저장 대기</span>
+              <span class="saved-at" id="tipMemoCount">0개</span>
             </div>
-            <textarea id="tradingTips" placeholder="반복해서 확인할 팁이나 관찰 기록을 남겨두세요."></textarea>
+            <div class="memo-list" id="tipMemoList"></div>
           </article>
         </section>
       </section>
     </main>
 
+    <script src="./memo-data.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

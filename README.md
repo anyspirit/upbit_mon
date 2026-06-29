@@ -21,6 +21,7 @@ Publish these files to the repository root:
 ```text
 index.html
 app.js
+memo-data.js
 styles.css
 README.md
 ```
