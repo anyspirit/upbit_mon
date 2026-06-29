@@ -33,19 +33,12 @@ const $ = (selector) => document.querySelector(selector);
 
 const els = {
   connectionStatus: $("#connectionStatus"),
-  btcPrice: $("#btcPrice"),
-  btcChangeRate: $("#btcChangeRate"),
-  btcChangePrice: $("#btcChangePrice"),
-  btcMaState: $("#btcMaState"),
-  btcChartButton: $("#btcChartButton"),
   tabs: document.querySelectorAll(".tab"),
   scannerPage: $("#scannerPage"),
   notesPage: $("#notesPage"),
   coinGroup: $("#coinGroup"),
   keyword: $("#keyword"),
-  minChange: $("#minChange"),
-  maxChange: $("#maxChange"),
-  minTradeValue: $("#minTradeValue"),
+  tradeValueToggle: $("#tradeValueToggle"),
   h1Ma20Mode: $("#h1Ma20Mode"),
   h1Ma60Mode: $("#h1Ma60Mode"),
   d1Ma20Mode: $("#d1Ma20Mode"),
@@ -114,9 +107,7 @@ function getFormRule() {
   return {
     coinGroup: els.coinGroup.value,
     keyword: els.keyword.value.trim().toLowerCase(),
-    minChange: numberValue(els.minChange),
-    maxChange: numberValue(els.maxChange),
-    minTradeValue: numberValue(els.minTradeValue),
+    minTradeValue: els.tradeValueToggle.classList.contains("active") ? 5000000000 : null,
     maModes: {
       h1: {
         20: els.h1Ma20Mode.value,
@@ -156,22 +147,6 @@ async function loadMarkets() {
   const allMarkets = await fetchJson("/market/all?isDetails=false");
   markets = allMarkets.filter((market) => market.market.startsWith("KRW-"));
   setStatus(`${markets.length}개 KRW 마켓 준비`, "ok");
-}
-
-async function loadBitcoinSummary() {
-  const [btc] = await fetchJson("/ticker?markets=KRW-BTC");
-  const candles = await fetchDayCandles("KRW-BTC", 60);
-  const ma = calculateMovingAverages(candles);
-  const changeRate = btc.signed_change_rate * 100;
-  const changeClass = changeRate >= 0 ? "gain" : "loss";
-
-  els.btcPrice.textContent = `${formatNumber(btc.trade_price)}원`;
-  els.btcChangeRate.textContent = `${changeRate.toFixed(2)}%`;
-  els.btcChangeRate.className = changeClass;
-  els.btcChangePrice.textContent = `${formatSignedMoney(btc.signed_change_price)}원`;
-  els.btcChangePrice.className = changeClass;
-  els.btcMaState.textContent = ma.bullStack ? "정배열" : ma.bearStack ? "역배열" : "혼조";
-  els.btcMaState.className = ma.bullStack ? "gain" : ma.bearStack ? "loss" : "";
 }
 
 function marketsForRule(rule) {
@@ -370,9 +345,6 @@ async function findMatches(rule) {
   const baseRows = tickers
     .map((ticker) => ({ ...ticker, info: marketMap.get(ticker.market), meta: coinDb[ticker.market] ?? {} }))
     .filter((row) => {
-      const changePercent = row.signed_change_rate * 100;
-      if (rule.minChange !== null && changePercent < rule.minChange) return false;
-      if (rule.maxChange !== null && changePercent > rule.maxChange) return false;
       if (rule.minTradeValue !== null && row.acc_trade_price_24h < rule.minTradeValue) return false;
       return true;
     })
@@ -614,9 +586,7 @@ function exportCsv() {
 function resetForm() {
   els.coinGroup.value = "all";
   els.keyword.value = "";
-  els.minChange.value = "";
-  els.maxChange.value = "";
-  els.minTradeValue.value = "10000000000";
+  setTradeValueToggle(true);
   els.h1Ma20Mode.value = "off";
   els.h1Ma60Mode.value = "off";
   els.d1Ma20Mode.value = "off";
@@ -749,13 +719,18 @@ function toast(message) {
 els.searchButton.addEventListener("click", searchNow);
 els.exportButton.addEventListener("click", exportCsv);
 els.resetButton.addEventListener("click", resetForm);
-els.btcChartButton.addEventListener("click", () => renderTradingView("BINANCE:BTCUSDT", "BTCUSDT"));
+els.tradeValueToggle.addEventListener("click", () => setTradeValueToggle(!els.tradeValueToggle.classList.contains("active")));
 
 setupTabs();
 setupMemos();
 renderTradingView("BINANCE:BTCUSDT", "BTCUSDT");
-Promise.all([loadMarkets(), loadBitcoinSummary()]).catch((error) => {
+loadMarkets().catch((error) => {
   console.error(error);
   setStatus("연결 오류", "error");
   toast("데이터 API에 연결하지 못했습니다.");
 });
+
+function setTradeValueToggle(active) {
+  els.tradeValueToggle.classList.toggle("active", active);
+  els.tradeValueToggle.setAttribute("aria-pressed", String(active));
+}

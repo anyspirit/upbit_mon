@@ -58,7 +58,6 @@ a {
 }
 
 .topbar,
-.btc-board,
 .workspace,
 .panel-head,
 .range-row,
@@ -115,7 +114,6 @@ h2 {
   font-size: 13px;
 }
 
-.btc-board,
 .panel,
 .chart-panel,
 .result-section,
@@ -126,26 +124,10 @@ h2 {
   box-shadow: var(--shadow);
 }
 
-.btc-board {
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  padding: 15px 18px;
-}
-
-.btc-card {
-  display: grid;
-  gap: 5px;
-}
-
 .label {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
-}
-
-.btc-card strong {
-  font-size: 20px;
 }
 
 .tabs {
@@ -185,6 +167,26 @@ h2 {
   flex: 1;
   min-width: 0;
   padding: 18px;
+}
+
+.top-chart {
+  margin-bottom: 14px;
+}
+
+.scan-guide {
+  flex: 1;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.scan-guide p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .chart-panel p,
@@ -267,6 +269,18 @@ textarea:focus {
 
 .primary:hover {
   background: var(--accent-strong);
+}
+
+.filter-toggle {
+  width: 100%;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.filter-toggle.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
 }
 
 .icon-button {
@@ -442,7 +456,6 @@ td small {
 
 @media (max-width: 960px) {
   .topbar,
-  .btc-board,
   .workspace,
   .range-row,
   .button-row,
