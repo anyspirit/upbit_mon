@@ -1,4 +1,4 @@
-const API_BASE = "https://upbit-api-proxy.anyspirit.workers.dev";
+const API_BASE = "https://upbit-api-proxy.anyspirit.workers.dev/v1";
 const TRADINGVIEW_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 const LEVELS_KEY = "upbit-pattern-levels";
 const MEMO_KEY = "upbit-pattern-memos";
