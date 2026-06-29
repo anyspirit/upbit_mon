@@ -30,11 +30,10 @@ const els = {
   minChange: $("#minChange"),
   maxChange: $("#maxChange"),
   minTradeValue: $("#minTradeValue"),
-  maStack: $("#maStack"),
-  ma20Mode: $("#ma20Mode"),
-  ma60Mode: $("#ma60Mode"),
-  ma120Mode: $("#ma120Mode"),
-  ma365Mode: $("#ma365Mode"),
+  h1Ma20Mode: $("#h1Ma20Mode"),
+  h1Ma60Mode: $("#h1Ma60Mode"),
+  d1Ma20Mode: $("#d1Ma20Mode"),
+  d1Ma60Mode: $("#d1Ma60Mode"),
   minVolumeRatio: $("#minVolumeRatio"),
   volumePeriod: $("#volumePeriod"),
   levelMode: $("#levelMode"),
@@ -101,12 +100,15 @@ function getFormRule() {
     minChange: numberValue(els.minChange),
     maxChange: numberValue(els.maxChange),
     minTradeValue: numberValue(els.minTradeValue),
-    maStack: els.maStack.value,
     maModes: {
-      20: els.ma20Mode.value,
-      60: els.ma60Mode.value,
-      120: els.ma120Mode.value,
-      365: els.ma365Mode.value,
+      h1: {
+        20: els.h1Ma20Mode.value,
+        60: els.h1Ma60Mode.value,
+      },
+      d1: {
+        20: els.d1Ma20Mode.value,
+        60: els.d1Ma60Mode.value,
+      },
     },
     minVolumeRatio: numberValue(els.minVolumeRatio),
     volumePeriod: Number(els.volumePeriod.value),
@@ -190,30 +192,39 @@ async function fetchDayCandles(market, targetCount) {
   return candles.slice(0, targetCount).reverse();
 }
 
-async function enrichRowsWithPatternData(rows, rule) {
-  const needsPatternData =
-    rule.maStack !== "off" ||
-    Object.values(rule.maModes).some((mode) => mode !== "off") ||
-    rule.minVolumeRatio !== null ||
-    rule.sortBy === "volumeRatio" ||
-    rule.sortBy === "maDistance";
+async function fetchMinuteCandles(market, unit, targetCount) {
+  const candles = [];
+  let to = "";
 
-  if (!needsPatternData) {
-    return rows.map((row) => ({ ...row, ma: emptyMa(), volumeRatio: null }));
+  while (candles.length < targetCount) {
+    const count = Math.min(200, targetCount - candles.length);
+    const path = `/candles/minutes/${unit}?market=${market}&count=${count}${to ? `&to=${encodeURIComponent(to)}` : ""}`;
+    const batch = await fetchJson(path);
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    candles.push(...batch);
+    to = batch[batch.length - 1].candle_date_time_utc;
+    await delay(90);
   }
 
+  return candles.slice(0, targetCount).reverse();
+}
+
+async function enrichRowsWithPatternData(rows, rule) {
   const enriched = [];
   const limitedRows = rows.slice(0, 80);
 
   for (const row of limitedRows) {
     try {
-      const candles = await fetchDayCandles(row.market, 365);
-      const ma = calculateMovingAverages(candles);
-      const volumeRatio = calculateVolumeRatio(candles, rule.volumePeriod);
+      const [hourCandles, dayCandles] = await Promise.all([fetchMinuteCandles(row.market, 60, 60), fetchDayCandles(row.market, 60)]);
+      const ma = {
+        h1: calculateMovingAverages(hourCandles),
+        d1: calculateMovingAverages(dayCandles),
+      };
+      const volumeRatio = calculateVolumeRatio(dayCandles, rule.volumePeriod);
       enriched.push({ ...row, ma, volumeRatio });
       await delay(100);
     } catch {
-      enriched.push({ ...row, ma: emptyMa(), volumeRatio: null });
+      enriched.push({ ...row, ma: emptyMaSet(), volumeRatio: null });
     }
   }
 
@@ -222,6 +233,10 @@ async function enrichRowsWithPatternData(rows, rule) {
 
 function emptyMa() {
   return { 20: null, 60: null, 120: null, 365: null, bullStack: false, bearStack: false };
+}
+
+function emptyMaSet() {
+  return { h1: emptyMa(), d1: emptyMa() };
 }
 
 function calculateMovingAverages(candles) {
@@ -282,16 +297,15 @@ async function findMatches(rule) {
 }
 
 function matchesMaRule(row, rule) {
-  if (rule.maStack === "bull" && !row.ma.bullStack) return false;
-  if (rule.maStack === "bear" && !row.ma.bearStack) return false;
-
-  return Object.entries(rule.maModes).every(([period, mode]) => {
-    if (mode === "off") return true;
-    const value = row.ma[period];
-    if (!Number.isFinite(value)) return false;
-    if (mode === "above") return row.trade_price > value;
-    return row.trade_price < value;
-  });
+  return Object.entries(rule.maModes).every(([frame, modes]) =>
+    Object.entries(modes).every(([period, mode]) => {
+      if (mode === "off") return true;
+      const value = row.ma?.[frame]?.[period];
+      if (!Number.isFinite(value)) return false;
+      if (mode === "above") return row.trade_price > value;
+      return row.trade_price < value;
+    })
+  );
 }
 
 function matchesVolumeRule(row, rule) {
@@ -327,8 +341,8 @@ function compareRows(a, b, sortBy) {
 }
 
 function maDistance(row) {
-  if (!Number.isFinite(row.ma?.[20])) return Number.POSITIVE_INFINITY;
-  return Math.abs((row.trade_price - row.ma[20]) / row.ma[20]);
+  if (!Number.isFinite(row.ma?.h1?.[20])) return Number.POSITIVE_INFINITY;
+  return Math.abs((row.trade_price - row.ma.h1[20]) / row.ma.h1[20]);
 }
 
 function formatNumber(value, digits = 0) {
@@ -396,10 +410,10 @@ function renderResults(rows) {
           <td>${formatNumber(row.trade_price)}원</td>
           <td class="${changeClass}">${change.toFixed(2)}%</td>
           <td>${formatNumber(row.acc_trade_price_24h)}</td>
-          <td>${formatMa(row, 20)}</td>
-          <td>${formatMa(row, 60)}</td>
-          <td>${formatMa(row, 120)}</td>
-          <td>${formatMa(row, 365)}</td>
+          <td>${formatMaStatus(row, "h1", 20)}</td>
+          <td>${formatMaStatus(row, "h1", 60)}</td>
+          <td>${formatMaStatus(row, "d1", 20)}</td>
+          <td>${formatMaStatus(row, "d1", 60)}</td>
           <td>${row.volumeRatio === null ? "-" : `${row.volumeRatio.toFixed(2)}x`}</td>
           <td>
             <div class="level-editor">
@@ -429,11 +443,14 @@ function renderResults(rows) {
   });
 }
 
-function formatMa(row, period) {
-  const value = row.ma?.[period];
+function formatMaStatus(row, frame, period) {
+  const value = row.ma?.[frame]?.[period];
   if (!Number.isFinite(value)) return "-";
   const distance = ((row.trade_price - value) / value) * 100;
-  return `${formatNumber(value)} (${distance > 0 ? "+" : ""}${distance.toFixed(1)}%)`;
+  const isAbove = row.trade_price > value;
+  const label = isAbove ? "위" : "아래";
+  const className = isAbove ? "gain" : "loss";
+  return `<span class="${className}">${label}</span> <small>${distance > 0 ? "+" : ""}${distance.toFixed(1)}%</small>`;
 }
 
 function saveLevel(market) {
@@ -476,7 +493,7 @@ function exportCsv() {
     return;
   }
 
-  const header = ["market", "korean_name", "nickname", "price", "change_percent", "trade_value_24h", "ma20", "ma60", "ma120", "ma365", "volume_ratio", "support", "resistance"];
+  const header = ["market", "korean_name", "nickname", "price", "change_percent", "trade_value_24h", "h1_ma20", "h1_ma60", "d1_ma20", "d1_ma60", "volume_ratio", "support", "resistance"];
   const lines = currentRows.map((row) => {
     const level = levels[row.market] ?? {};
     return [
@@ -486,10 +503,10 @@ function exportCsv() {
       row.trade_price,
       (row.signed_change_rate * 100).toFixed(2),
       Math.round(row.acc_trade_price_24h),
-      row.ma?.[20] ?? "",
-      row.ma?.[60] ?? "",
-      row.ma?.[120] ?? "",
-      row.ma?.[365] ?? "",
+      row.ma?.h1?.[20] ?? "",
+      row.ma?.h1?.[60] ?? "",
+      row.ma?.d1?.[20] ?? "",
+      row.ma?.d1?.[60] ?? "",
       row.volumeRatio ?? "",
       level.support ?? "",
       level.resistance ?? "",
@@ -510,11 +527,10 @@ function resetForm() {
   els.minChange.value = "";
   els.maxChange.value = "";
   els.minTradeValue.value = "10000000000";
-  els.maStack.value = "off";
-  els.ma20Mode.value = "off";
-  els.ma60Mode.value = "off";
-  els.ma120Mode.value = "off";
-  els.ma365Mode.value = "off";
+  els.h1Ma20Mode.value = "off";
+  els.h1Ma60Mode.value = "off";
+  els.d1Ma20Mode.value = "off";
+  els.d1Ma60Mode.value = "off";
   els.minVolumeRatio.value = "";
   els.volumePeriod.value = "20";
   els.levelMode.value = "off";

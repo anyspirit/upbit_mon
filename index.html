@@ -83,46 +83,37 @@
               <input id="minTradeValue" type="number" step="100000000" value="10000000000" />
             </label>
 
-            <label>
-              이동평균 배열
-              <select id="maStack">
-                <option value="off">사용 안 함</option>
-                <option value="bull">정배열: MA20 &gt; MA60 &gt; MA120 &gt; MA365</option>
-                <option value="bear">역배열: MA20 &lt; MA60 &lt; MA120 &lt; MA365</option>
-              </select>
-            </label>
-
             <div class="ma-grid">
               <label>
-                MA20
-                <select id="ma20Mode">
+                1시간 MA20
+                <select id="h1Ma20Mode">
                   <option value="off">무관</option>
-                  <option value="above">현재가 위</option>
-                  <option value="below">현재가 아래</option>
+                  <option value="above">캔들이 위</option>
+                  <option value="below">캔들이 아래</option>
                 </select>
               </label>
               <label>
-                MA60
-                <select id="ma60Mode">
+                1시간 MA60
+                <select id="h1Ma60Mode">
                   <option value="off">무관</option>
-                  <option value="above">현재가 위</option>
-                  <option value="below">현재가 아래</option>
+                  <option value="above">캔들이 위</option>
+                  <option value="below">캔들이 아래</option>
                 </select>
               </label>
               <label>
-                MA120
-                <select id="ma120Mode">
+                1일 MA20
+                <select id="d1Ma20Mode">
                   <option value="off">무관</option>
-                  <option value="above">현재가 위</option>
-                  <option value="below">현재가 아래</option>
+                  <option value="above">캔들이 위</option>
+                  <option value="below">캔들이 아래</option>
                 </select>
               </label>
               <label>
-                MA365
-                <select id="ma365Mode">
+                1일 MA60
+                <select id="d1Ma60Mode">
                   <option value="off">무관</option>
-                  <option value="above">현재가 위</option>
-                  <option value="below">현재가 아래</option>
+                  <option value="above">캔들이 위</option>
+                  <option value="below">캔들이 아래</option>
                 </select>
               </label>
             </div>
@@ -161,7 +152,7 @@
               <select id="sortBy">
                 <option value="tradeValue">거래대금순</option>
                 <option value="volumeRatio">거래량 배수순</option>
-                <option value="maDistance">MA20 근접순</option>
+                <option value="maDistance">1H MA20 근접순</option>
                 <option value="changeRate">변동률순</option>
               </select>
             </label>
@@ -199,10 +190,10 @@
                   <th>현재가</th>
                   <th>24시간</th>
                   <th>거래대금</th>
-                  <th>MA20</th>
-                  <th>MA60</th>
-                  <th>MA120</th>
-                  <th>MA365</th>
+                  <th>1H MA20</th>
+                  <th>1H MA60</th>
+                  <th>1D MA20</th>
+                  <th>1D MA60</th>
                   <th>거래량</th>
                   <th>매물대</th>
                   <th></th>

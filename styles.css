@@ -319,6 +319,11 @@ td {
   font-size: 14px;
 }
 
+td small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .coin-name {
   display: grid;
   gap: 3px;

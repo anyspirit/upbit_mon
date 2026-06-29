@@ -7,8 +7,8 @@ A GitHub Pages web app for filtering Upbit KRW market coins by repeatable patter
 - Scans Upbit KRW market coins
 - Shows BTC/KRW price, daily change rate, daily change amount, and BTC moving-average state
 - Displays TradingView charts using Binance USDT symbols
-- Filters by daily MA20, MA60, MA120, and MA365
-- Filters by moving-average stack, price position versus each MA, and daily volume ratio
+- Shows whether the latest candle is above 1H MA20, 1H MA60, 1D MA20, and 1D MA60
+- Filters by price position versus each key MA and daily volume ratio
 - Saves support and resistance levels per coin in browser storage
 - Filters by support check or resistance breakout
 - Provides memo tabs for trading rules and trading tips
