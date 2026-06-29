@@ -394,6 +394,72 @@ td small {
   padding: 18px;
 }
 
+.coin-db-toolbar {
+  margin-bottom: 14px;
+}
+
+.coin-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.coin-group-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.coin-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.coin-db-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.coin-db-item strong,
+.coin-db-item span {
+  display: block;
+}
+
+.coin-db-item span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.coin-db-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.coin-db-meta em,
+.coin-db-meta small {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .memo-form-grid {
   display: grid;
   grid-template-columns: 180px 1fr;
@@ -461,6 +527,7 @@ td small {
   .button-row,
   .result-head,
   .notes-layout,
+  .coin-group-grid,
   .memo-form-grid {
     display: grid;
     grid-template-columns: 1fr;

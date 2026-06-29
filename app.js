@@ -20,14 +20,16 @@ function resolveDataApiBase() {
   return localStorage.getItem("upbit-pattern-api-base") || DEFAULT_DATA_API_BASE;
 }
 
-const DEFAULT_COIN_DB = {
-  "KRW-BTC": { nickname: "대장", groups: ["major", "top20"] },
-  "KRW-ETH": { nickname: "이더", groups: ["major", "top20"] },
-  "KRW-XRP": { nickname: "리플", groups: ["major", "top20"] },
-  "KRW-SOL": { nickname: "솔라나", groups: ["major", "top20"] },
-  "KRW-DOGE": { nickname: "도지", groups: ["major", "top20"] },
-  "KRW-ADA": { nickname: "에이다", groups: ["major", "top20"] },
-};
+const DEFAULT_COIN_DB = window.DEFAULT_COIN_DB || {};
+const COIN_GROUPS = [
+  { id: "favorite", label: "관심코인" },
+  { id: "major", label: "메이저코인" },
+  { id: "kimchi", label: "김치코인" },
+  { id: "new", label: "신규코인" },
+  { id: "top20", label: "Top20코인" },
+  { id: "excluded", label: "제외코인" },
+  { id: "unclassified", label: "미분류" },
+];
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -35,6 +37,7 @@ const els = {
   connectionStatus: $("#connectionStatus"),
   tabs: document.querySelectorAll(".tab"),
   scannerPage: $("#scannerPage"),
+  coinsPage: $("#coinsPage"),
   notesPage: $("#notesPage"),
   coinGroup: $("#coinGroup"),
   keyword: $("#keyword"),
@@ -55,6 +58,9 @@ const els = {
   tradingviewChart: $("#tradingviewChart"),
   results: $("#results"),
   resultMeta: $("#resultMeta"),
+  coinDbSearch: $("#coinDbSearch"),
+  coinDbSummary: $("#coinDbSummary"),
+  coinGroupGrid: $("#coinGroupGrid"),
   memoType: $("#memoType"),
   memoTitle: $("#memoTitle"),
   memoBody: $("#memoBody"),
@@ -147,6 +153,7 @@ async function loadMarkets() {
   const allMarkets = await fetchJson("/market/all?isDetails=false");
   markets = allMarkets.filter((market) => market.market.startsWith("KRW-"));
   setStatus(`${markets.length}개 KRW 마켓 준비`, "ok");
+  renderCoinDb();
 }
 
 function marketsForRule(rule) {
@@ -603,9 +610,80 @@ function setupTabs() {
     tab.addEventListener("click", () => {
       els.tabs.forEach((item) => item.classList.toggle("active", item === tab));
       els.scannerPage.classList.toggle("active", tab.dataset.tab === "scanner");
+      els.coinsPage.classList.toggle("active", tab.dataset.tab === "coins");
       els.notesPage.classList.toggle("active", tab.dataset.tab === "notes");
     });
   });
+}
+
+function setupCoinDb() {
+  els.coinDbSearch.addEventListener("input", renderCoinDb);
+  renderCoinDb();
+}
+
+function renderCoinDb() {
+  if (!els.coinGroupGrid) return;
+  const keyword = (els.coinDbSearch.value || "").trim().toLowerCase();
+  const rows = markets
+    .map((market) => ({ ...market, meta: coinDb[market.market] ?? {} }))
+    .filter((market) => {
+      if (!keyword) return true;
+      const target = `${market.market} ${market.korean_name} ${market.english_name} ${market.meta.nickname ?? ""}`.toLowerCase();
+      return target.includes(keyword);
+    });
+
+  const totalClassified = Object.keys(coinDb).length;
+  els.coinDbSummary.textContent = `${rows.length}개 표시 · ${totalClassified}개 분류됨`;
+  els.coinGroupGrid.innerHTML = COIN_GROUPS.map((group) => renderCoinGroup(group, rows)).join("");
+}
+
+function renderCoinGroup(group, rows) {
+  const items = rows.filter((market) => belongsToCoinGroup(market, group.id));
+  return `
+    <article class="coin-group-card">
+      <div class="panel-head">
+        <h2>${group.label}</h2>
+        <span class="saved-at">${items.length}개</span>
+      </div>
+      <div class="coin-list">
+        ${
+          items.length === 0
+            ? `<p class="empty">해당 코인이 없습니다.</p>`
+            : items.map(renderCoinItem).join("")
+        }
+      </div>
+    </article>
+  `;
+}
+
+function belongsToCoinGroup(market, groupId) {
+  const meta = market.meta ?? {};
+  if (groupId === "favorite") return meta.favorite === true;
+  if (groupId === "excluded") return meta.excluded === true;
+  if (groupId === "unclassified") return !meta.favorite && !meta.excluded && (!Array.isArray(meta.groups) || meta.groups.length === 0);
+  return (meta.groups ?? []).includes(groupId);
+}
+
+function renderCoinItem(market) {
+  const groups = market.meta.groups ?? [];
+  const flags = [
+    market.meta.favorite ? "관심" : "",
+    market.meta.excluded ? "제외" : "",
+    ...groups.map((group) => COIN_GROUPS.find((item) => item.id === group)?.label ?? group),
+  ].filter(Boolean);
+
+  return `
+    <div class="coin-db-item">
+      <div>
+        <strong>${market.korean_name}</strong>
+        <span>${market.market} · ${market.english_name}</span>
+      </div>
+      <div class="coin-db-meta">
+        ${market.meta.nickname ? `<em>${market.meta.nickname}</em>` : ""}
+        ${flags.map((flag) => `<small>${flag}</small>`).join("")}
+      </div>
+    </div>
+  `;
 }
 
 function setupMemos() {
@@ -722,6 +800,7 @@ els.resetButton.addEventListener("click", resetForm);
 els.tradeValueToggle.addEventListener("click", () => setTradeValueToggle(!els.tradeValueToggle.classList.contains("active")));
 
 setupTabs();
+setupCoinDb();
 setupMemos();
 renderTradingView("BINANCE:BTCUSDT", "BTCUSDT");
 loadMarkets().catch((error) => {

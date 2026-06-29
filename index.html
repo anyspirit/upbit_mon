@@ -17,6 +17,7 @@
 
       <nav class="tabs" aria-label="화면 전환">
         <button class="tab active" data-tab="scanner" type="button">검색기</button>
+        <button class="tab" data-tab="coins" type="button">코인 DB</button>
         <button class="tab" data-tab="notes" type="button">매매 메모</button>
       </nav>
 
@@ -181,6 +182,24 @@
         </section>
       </section>
 
+      <section class="tab-page" id="coinsPage">
+        <section class="coin-db-toolbar">
+          <article class="memo-panel">
+            <div class="panel-head">
+              <h2>코인 분류</h2>
+              <span class="saved-at" id="coinDbSummary">-</span>
+            </div>
+            <p class="notice">코인별 닉네임과 그룹을 목록형으로 확인합니다. 다음 단계에서 편집 기능을 연결할 예정입니다.</p>
+            <label>
+              코인 검색
+              <input id="coinDbSearch" type="search" placeholder="예: BTC, 비트코인, 대장" autocomplete="off" />
+            </label>
+          </article>
+        </section>
+
+        <section class="coin-group-grid" id="coinGroupGrid"></section>
+      </section>
+
       <section class="tab-page" id="notesPage">
         <section class="memo-toolbar">
           <article class="memo-panel memo-form">
@@ -231,6 +250,7 @@
       </section>
     </main>
 
+    <script src="./coin-data.js"></script>
     <script src="./memo-data.js"></script>
     <script src="./app.js"></script>
   </body>

@@ -22,6 +22,7 @@ Publish these files to the repository root:
 ```text
 index.html
 app.js
+coin-data.js
 memo-data.js
 styles.css
 README.md
@@ -42,6 +43,7 @@ https://anyspirit.github.io/upbit_mon/
 - Charts use Binance `SYMBOLUSDT` pairs.
 - Coins that do not exist on Binance may not show a TradingView chart.
 - Support/resistance levels, memos, and candle cache are stored in browser `localStorage`.
+- Default coin classifications are stored in `coin-data.js`.
 
 ## Worker and D1
 
