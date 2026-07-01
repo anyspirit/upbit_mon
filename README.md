@@ -45,6 +45,25 @@ https://anyspirit.github.io/upbit_mon/
 - Support/resistance levels, memos, and candle cache are stored in browser `localStorage`.
 - Default coin classifications are stored in `coin-data.js`.
 
+## Upbit issued date crawl
+
+The `tools/upbit-issued-crawler.mjs` script is a one-off helper for checking the `최초발행` field from Upbit's web information tab.
+
+```powershell
+npm install playwright
+npx playwright install chromium
+node tools/upbit-issued-crawler.mjs
+```
+
+For a small test run:
+
+```powershell
+$env:LIMIT=3
+node tools/upbit-issued-crawler.mjs
+```
+
+The result is saved to `data/upbit-issued-at.json`.
+
 ## Worker and D1
 
 The `worker/` folder contains a Cloudflare Worker + D1 cache design for storing KRW market candle data.
