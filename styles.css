@@ -59,6 +59,7 @@ a {
 
 .topbar,
 .workspace,
+.scanner-layout,
 .panel-head,
 .range-row,
 .button-row,
@@ -104,16 +105,6 @@ h2 {
   font-size: 18px;
 }
 
-.status-pill {
-  flex: 0 0 auto;
-  padding: 9px 13px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .panel,
 .chart-panel,
 .result-section,
@@ -153,13 +144,18 @@ h2 {
   display: block;
 }
 
-.workspace {
+.workspace,
+.scanner-layout {
   align-items: stretch;
   margin-bottom: 14px;
 }
 
+.scanner-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.3fr) minmax(0, 0.7fr);
+}
+
 .panel {
-  flex: 0 0 390px;
   padding: 18px;
 }
 
@@ -167,26 +163,6 @@ h2 {
   flex: 1;
   min-width: 0;
   padding: 18px;
-}
-
-.top-chart {
-  margin-bottom: 14px;
-}
-
-.scan-guide {
-  flex: 1;
-  min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.scan-guide p {
-  margin: 8px 0 0;
-  color: var(--muted);
-  line-height: 1.55;
 }
 
 .chart-panel p,
@@ -206,7 +182,7 @@ h2 {
 
 .chart-box {
   width: 100%;
-  height: 460px;
+  height: 520px;
   margin-top: 14px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -271,16 +247,36 @@ textarea:focus {
   background: var(--accent-strong);
 }
 
-.filter-toggle {
+.filter-toggle,
+.segmented-control button {
   width: 100%;
-  margin-bottom: 12px;
   font-weight: 700;
 }
 
-.filter-toggle.active {
+.filter-toggle span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.filter-toggle.active,
+.segmented-control button.active {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
+}
+
+.filter-toggle.active span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .icon-button {
@@ -307,13 +303,13 @@ textarea:focus {
 
 table {
   width: 100%;
-  min-width: 1320px;
+  min-width: 1040px;
   border-collapse: collapse;
 }
 
 th,
 td {
-  padding: 13px 14px;
+  padding: 12px 11px;
   border-bottom: 1px solid var(--line);
   text-align: right;
   white-space: nowrap;
@@ -321,6 +317,8 @@ td {
 
 th:first-child,
 td:first-child {
+  width: 170px;
+  max-width: 170px;
   text-align: left;
 }
 
@@ -340,28 +338,22 @@ td small {
 
 .coin-name {
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .coin-name strong {
-  font-size: 15px;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .coin-name span {
+  overflow: hidden;
   color: var(--muted);
   font-size: 12px;
-}
-
-.level-editor {
-  display: grid;
-  grid-template-columns: 96px 96px;
-  gap: 6px;
-}
-
-.level-editor input {
-  min-height: 34px;
-  padding: 0 8px;
-  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gain {
@@ -520,9 +512,50 @@ td small {
   z-index: 10;
 }
 
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(245, 247, 248, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+}
+
+.loading-overlay.active {
+  display: grid;
+}
+
+.loading-overlay > div,
+.loading-overlay > strong {
+  grid-area: 1 / 1;
+}
+
+.loading-overlay strong {
+  margin-top: 92px;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.loader {
+  width: 64px;
+  height: 64px;
+  border: 6px solid rgba(8, 125, 115, 0.16);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 960px) {
   .topbar,
   .workspace,
+  .scanner-layout,
   .range-row,
   .button-row,
   .result-head,
@@ -539,14 +572,10 @@ td small {
   }
 
   .panel {
-    flex-basis: auto;
+    min-width: 0;
   }
 
   .chart-box {
     height: 380px;
-  }
-
-  .status-pill {
-    width: fit-content;
   }
 }

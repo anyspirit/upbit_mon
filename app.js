@@ -3,12 +3,13 @@ const DATA_API_BASE = resolveDataApiBase();
 const API_BASE = `${DATA_API_BASE}/v1`;
 const CANDLE_API_BASE = `${DATA_API_BASE}/api`;
 const TRADINGVIEW_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-const LEVELS_KEY = "upbit-pattern-levels";
 const MEMO_KEY = "upbit-pattern-memo-cards";
 const COIN_DB_KEY = "upbit-pattern-coin-db";
 const CANDLE_CACHE_KEY = "upbit-pattern-candle-cache";
 const HOUR_CANDLE_CACHE_MS = 20 * 60 * 1000;
 const DAY_CANDLE_CACHE_MS = 6 * 60 * 60 * 1000;
+const CONVERGENCE_PERIODS = [20, 60, 120, 240, 365];
+const CONVERGENCE_TOLERANCE = 0.05;
 
 function resolveDataApiBase() {
   const params = new URLSearchParams(window.location.search);
@@ -34,26 +35,22 @@ const COIN_GROUPS = [
 const $ = (selector) => document.querySelector(selector);
 
 const els = {
-  connectionStatus: $("#connectionStatus"),
+  loadingOverlay: $("#loadingOverlay"),
   tabs: document.querySelectorAll(".tab"),
   scannerPage: $("#scannerPage"),
   coinsPage: $("#coinsPage"),
   notesPage: $("#notesPage"),
   coinGroup: $("#coinGroup"),
   keyword: $("#keyword"),
-  tradeValueToggle: $("#tradeValueToggle"),
-  h1Ma20Mode: $("#h1Ma20Mode"),
-  h1Ma60Mode: $("#h1Ma60Mode"),
-  d1Ma20Mode: $("#d1Ma20Mode"),
-  d1Ma60Mode: $("#d1Ma60Mode"),
+  tradeValueButtons: document.querySelectorAll("[data-trade-value]"),
+  h1ConvergenceToggle: $("#h1ConvergenceToggle"),
+  conditionOneToggle: $("#conditionOneToggle"),
+  uptrendToggle: $("#uptrendToggle"),
   minVolumeRatio: $("#minVolumeRatio"),
   volumePeriod: $("#volumePeriod"),
-  levelMode: $("#levelMode"),
-  levelTolerance: $("#levelTolerance"),
   sortBy: $("#sortBy"),
   searchButton: $("#searchButton"),
   resetButton: $("#resetButton"),
-  exportButton: $("#exportButton"),
   chartTitle: $("#chartTitle"),
   tradingviewChart: $("#tradingviewChart"),
   results: $("#results"),
@@ -75,7 +72,6 @@ const els = {
 
 let markets = [];
 let currentRows = [];
-let levels = readJson(LEVELS_KEY, {});
 let memoCards = readMemoCards();
 let coinDb = { ...DEFAULT_COIN_DB, ...readJson(COIN_DB_KEY, {}) };
 let candleCache = readJson(CANDLE_CACHE_KEY, {});
@@ -99,8 +95,8 @@ function readMemoCards() {
 }
 
 function setStatus(text, tone = "idle") {
-  els.connectionStatus.textContent = text;
-  els.connectionStatus.dataset.tone = tone;
+  document.body.dataset.status = tone;
+  document.body.dataset.statusText = text;
 }
 
 function numberValue(el) {
@@ -113,21 +109,14 @@ function getFormRule() {
   return {
     coinGroup: els.coinGroup.value,
     keyword: els.keyword.value.trim().toLowerCase(),
-    minTradeValue: els.tradeValueToggle.classList.contains("active") ? 5000000000 : null,
-    maModes: {
-      h1: {
-        20: els.h1Ma20Mode.value,
-        60: els.h1Ma60Mode.value,
-      },
-      d1: {
-        20: els.d1Ma20Mode.value,
-        60: els.d1Ma60Mode.value,
-      },
+    minTradeValue: getSelectedTradeValue(),
+    patternFilters: {
+      convergence: els.h1ConvergenceToggle.classList.contains("active"),
+      conditionOne: els.conditionOneToggle.classList.contains("active"),
+      uptrend: els.uptrendToggle.classList.contains("active"),
     },
     minVolumeRatio: numberValue(els.minVolumeRatio),
     volumePeriod: Number(els.volumePeriod.value),
-    levelMode: els.levelMode.value,
-    levelTolerance: numberValue(els.levelTolerance) ?? 0,
     sortBy: els.sortBy.value,
   };
 }
@@ -287,16 +276,17 @@ async function enrichRowsWithPatternData(rows, rule) {
 
   for (const row of limitedRows) {
     try {
-      const [hourCandles, dayCandles] = await Promise.all([fetchMinuteCandles(row.market, 60, 60), fetchDayCandles(row.market, 60)]);
+      const [hourCandles, dayCandles] = await Promise.all([fetchMinuteCandles(row.market, 60, 365), fetchDayCandles(row.market, 60)]);
       const ma = {
         h1: calculateMovingAverages(hourCandles),
         d1: calculateMovingAverages(dayCandles),
       };
+      const patterns = calculatePatterns(row.trade_price, ma);
       const volumeRatio = calculateVolumeRatio(dayCandles, rule.volumePeriod);
-      enriched.push({ ...row, ma, volumeRatio });
+      enriched.push({ ...row, ma, patterns, volumeRatio });
       await delay(100);
     } catch {
-      enriched.push({ ...row, ma: emptyMaSet(), volumeRatio: null });
+      enriched.push({ ...row, ma: emptyMaSet(), patterns: emptyPatterns(), volumeRatio: null });
     }
   }
 
@@ -317,11 +307,27 @@ function calculateMovingAverages(candles) {
     20: average(closes.slice(-20)),
     60: average(closes.slice(-60)),
     120: average(closes.slice(-120)),
+    240: average(closes.slice(-240)),
     365: average(closes.slice(-365)),
   };
   ma.bullStack = [ma[20], ma[60], ma[120], ma[365]].every(Number.isFinite) && ma[20] > ma[60] && ma[60] > ma[120] && ma[120] > ma[365];
   ma.bearStack = [ma[20], ma[60], ma[120], ma[365]].every(Number.isFinite) && ma[20] < ma[60] && ma[60] < ma[120] && ma[120] < ma[365];
   return ma;
+}
+
+function calculatePatterns(price, ma) {
+  const h1Values = CONVERGENCE_PERIODS.map((period) => ma.h1[period]);
+  const hasAllH1 = h1Values.every(Number.isFinite);
+  const h1Convergence = hasAllH1 && h1Values.every((value) => Math.abs((price - value) / price) <= CONVERGENCE_TOLERANCE);
+  const conditionOne = isAboveMaValue(price, ma.h1[20]) && isAboveMaValue(price, ma.h1[60]) && ma.h1[20] > ma.h1[60];
+  const dailyAbove = isAboveMaValue(price, ma.d1[20]) && isAboveMaValue(price, ma.d1[60]);
+  const uptrend = conditionOne && dailyAbove;
+
+  return { h1Convergence, conditionOne, uptrend };
+}
+
+function emptyPatterns() {
+  return { h1Convergence: false, conditionOne: false, uptrend: false };
 }
 
 function calculateVolumeRatio(candles, period) {
@@ -361,45 +367,23 @@ async function findMatches(rule) {
   return enrichedRows
     .filter((row) => matchesMaRule(row, rule))
     .filter((row) => matchesVolumeRule(row, rule))
-    .filter((row) => matchesLevelRule(row, rule))
     .sort((a, b) => compareRows(a, b, rule.sortBy));
 }
 
 function matchesMaRule(row, rule) {
-  return Object.entries(rule.maModes).every(([frame, modes]) =>
-    Object.entries(modes).every(([period, mode]) => {
-      if (mode === "off") return true;
-      const value = row.ma?.[frame]?.[period];
-      if (!Number.isFinite(value)) return false;
-      if (mode === "above") return row.trade_price > value;
-      return row.trade_price < value;
-    })
-  );
+  if (rule.patternFilters.convergence && !row.patterns.h1Convergence) return false;
+  if (rule.patternFilters.conditionOne && !row.patterns.conditionOne) return false;
+  if (rule.patternFilters.uptrend && !row.patterns.uptrend) return false;
+  return true;
+}
+
+function isAboveMaValue(price, value) {
+  return Number.isFinite(value) && price > value;
 }
 
 function matchesVolumeRule(row, rule) {
   if (rule.minVolumeRatio === null) return true;
   return row.volumeRatio !== null && row.volumeRatio >= rule.minVolumeRatio;
-}
-
-function matchesLevelRule(row, rule) {
-  if (rule.levelMode === "off") return true;
-  const level = levels[row.market];
-  const tolerance = rule.levelTolerance / 100;
-
-  if (rule.levelMode === "breakout") {
-    return Number.isFinite(level?.resistance) && row.trade_price >= level.resistance;
-  }
-
-  if (rule.levelMode === "support") {
-    return (
-      Number.isFinite(level?.support) &&
-      row.trade_price >= level.support * (1 - tolerance) &&
-      row.trade_price <= level.support * (1 + tolerance)
-    );
-  }
-
-  return true;
 }
 
 function compareRows(a, b, sortBy) {
@@ -424,9 +408,14 @@ function formatSignedMoney(value) {
   return `${sign}${formatNumber(value)}`;
 }
 
-function marketToBinanceSymbol(market) {
+function formatTradeValue(value) {
+  if (!Number.isFinite(value)) return "-";
+  return `${(value / 100000000).toFixed(1)}억`;
+}
+
+function marketToUpbitSymbol(market) {
   const code = market.replace("KRW-", "");
-  return `BINANCE:${code}USDT`;
+  return `UPBIT:${code}KRW`;
 }
 
 function renderTradingView(symbol, label) {
@@ -457,7 +446,7 @@ function renderTradingView(symbol, label) {
 function renderResults(rows) {
   currentRows = rows;
   if (rows.length === 0) {
-    els.results.innerHTML = `<tr><td colspan="11" class="empty">조건에 맞는 코인이 없습니다.</td></tr>`;
+    els.results.innerHTML = `<tr><td colspan="9" class="empty">조건에 맞는 코인이 없습니다.</td></tr>`;
     return;
   }
 
@@ -466,7 +455,6 @@ function renderResults(rows) {
       const change = row.signed_change_rate * 100;
       const changeClass = change >= 0 ? "gain" : "loss";
       const upbitUrl = `https://upbit.com/exchange?code=CRIX.UPBIT.${row.market}`;
-      const level = levels[row.market] ?? {};
       const nickname = row.meta.nickname ? ` · ${row.meta.nickname}` : "";
       return `
         <tr>
@@ -478,20 +466,12 @@ function renderResults(rows) {
           </td>
           <td>${formatNumber(row.trade_price)}원</td>
           <td class="${changeClass}">${change.toFixed(2)}%</td>
-          <td>${formatNumber(row.acc_trade_price_24h)}</td>
-          <td>${formatMaStatus(row, "h1", 20)}</td>
-          <td>${formatMaStatus(row, "h1", 60)}</td>
-          <td>${formatMaStatus(row, "d1", 20)}</td>
-          <td>${formatMaStatus(row, "d1", 60)}</td>
+          <td>${formatTradeValue(row.acc_trade_price_24h)}</td>
+          <td>${formatPattern(row.patterns.h1Convergence)}</td>
+          <td>${formatPattern(row.patterns.conditionOne)}</td>
+          <td>${formatPattern(row.patterns.uptrend)}</td>
           <td>${row.volumeRatio === null ? "-" : `${row.volumeRatio.toFixed(2)}x`}</td>
           <td>
-            <div class="level-editor">
-              <input data-level-market="${row.market}" data-level-type="support" type="number" placeholder="지지" value="${level.support ?? ""}" />
-              <input data-level-market="${row.market}" data-level-type="resistance" type="number" placeholder="저항" value="${level.resistance ?? ""}" />
-            </div>
-          </td>
-          <td>
-            <button type="button" data-save-level="${row.market}">저장</button>
             <button type="button" data-chart="${row.market}">차트</button>
             <a href="${upbitUrl}" target="_blank" rel="noopener">업비트</a>
           </td>
@@ -503,43 +483,20 @@ function renderResults(rows) {
   els.results.querySelectorAll("[data-chart]").forEach((button) => {
     button.addEventListener("click", () => {
       const market = button.dataset.chart;
-      renderTradingView(marketToBinanceSymbol(market), market.replace("KRW-", "") + "USDT");
+      renderTradingView(marketToUpbitSymbol(market), market.replace("KRW-", "") + "KRW");
     });
   });
 
-  els.results.querySelectorAll("[data-save-level]").forEach((button) => {
-    button.addEventListener("click", () => saveLevel(button.dataset.saveLevel));
-  });
 }
 
-function formatMaStatus(row, frame, period) {
-  const value = row.ma?.[frame]?.[period];
-  if (!Number.isFinite(value)) return "-";
-  const distance = ((row.trade_price - value) / value) * 100;
-  const isAbove = row.trade_price > value;
-  const label = isAbove ? "위" : "아래";
-  const className = isAbove ? "gain" : "loss";
-  return `<span class="${className}">${label}</span> <small>${distance > 0 ? "+" : ""}${distance.toFixed(1)}%</small>`;
-}
-
-function saveLevel(market) {
-  const inputs = els.results.querySelectorAll(`[data-level-market="${market}"]`);
-  const next = { ...(levels[market] ?? {}) };
-
-  inputs.forEach((input) => {
-    const value = input.value === "" ? null : Number(input.value);
-    if (Number.isFinite(value)) next[input.dataset.levelType] = value;
-    else delete next[input.dataset.levelType];
-  });
-
-  levels[market] = next;
-  writeJson(LEVELS_KEY, levels);
-  toast(`${market} 매물대를 저장했습니다.`);
+function formatPattern(active) {
+  return active ? `<span class="gain">충족</span>` : `<span class="loss">미충족</span>`;
 }
 
 async function searchNow() {
   const rule = getFormRule();
   els.searchButton.disabled = true;
+  setLoading(true);
   setStatus("검색 중");
   try {
     const rows = await findMatches(rule);
@@ -553,55 +510,19 @@ async function searchNow() {
     setStatus("연결 오류", "error");
   } finally {
     els.searchButton.disabled = false;
+    setLoading(false);
   }
-}
-
-function exportCsv() {
-  if (currentRows.length === 0) {
-    toast("내보낼 검색 결과가 없습니다.");
-    return;
-  }
-
-  const header = ["market", "korean_name", "nickname", "price", "change_percent", "trade_value_24h", "h1_ma20", "h1_ma60", "d1_ma20", "d1_ma60", "volume_ratio", "support", "resistance"];
-  const lines = currentRows.map((row) => {
-    const level = levels[row.market] ?? {};
-    return [
-      row.market,
-      row.info.korean_name,
-      row.meta.nickname ?? "",
-      row.trade_price,
-      (row.signed_change_rate * 100).toFixed(2),
-      Math.round(row.acc_trade_price_24h),
-      row.ma?.h1?.[20] ?? "",
-      row.ma?.h1?.[60] ?? "",
-      row.ma?.d1?.[20] ?? "",
-      row.ma?.d1?.[60] ?? "",
-      row.volumeRatio ?? "",
-      level.support ?? "",
-      level.resistance ?? "",
-    ].join(",");
-  });
-  const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `upbit-pattern-scan-${Date.now()}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 function resetForm() {
   els.coinGroup.value = "all";
   els.keyword.value = "";
-  setTradeValueToggle(true);
-  els.h1Ma20Mode.value = "off";
-  els.h1Ma60Mode.value = "off";
-  els.d1Ma20Mode.value = "off";
-  els.d1Ma60Mode.value = "off";
+  setTradeValueFilter(5000000000);
+  setToggle(els.h1ConvergenceToggle, false);
+  setToggle(els.conditionOneToggle, false);
+  setToggle(els.uptrendToggle, false);
   els.minVolumeRatio.value = "";
   els.volumePeriod.value = "20";
-  els.levelMode.value = "off";
-  els.levelTolerance.value = "2";
   els.sortBy.value = "tradeValue";
 }
 
@@ -794,10 +715,19 @@ function toast(message) {
   setTimeout(() => node.remove(), 3600);
 }
 
+function setLoading(active) {
+  els.loadingOverlay.classList.toggle("active", active);
+  els.loadingOverlay.setAttribute("aria-hidden", String(!active));
+}
+
 els.searchButton.addEventListener("click", searchNow);
-els.exportButton.addEventListener("click", exportCsv);
 els.resetButton.addEventListener("click", resetForm);
-els.tradeValueToggle.addEventListener("click", () => setTradeValueToggle(!els.tradeValueToggle.classList.contains("active")));
+els.tradeValueButtons.forEach((button) => {
+  button.addEventListener("click", () => setTradeValueFilter(Number(button.dataset.tradeValue)));
+});
+els.h1ConvergenceToggle.addEventListener("click", () => setToggle(els.h1ConvergenceToggle, !els.h1ConvergenceToggle.classList.contains("active")));
+els.conditionOneToggle.addEventListener("click", () => setToggle(els.conditionOneToggle, !els.conditionOneToggle.classList.contains("active")));
+els.uptrendToggle.addEventListener("click", () => setToggle(els.uptrendToggle, !els.uptrendToggle.classList.contains("active")));
 
 setupTabs();
 setupCoinDb();
@@ -809,7 +739,20 @@ loadMarkets().catch((error) => {
   toast("데이터 API에 연결하지 못했습니다.");
 });
 
-function setTradeValueToggle(active) {
-  els.tradeValueToggle.classList.toggle("active", active);
-  els.tradeValueToggle.setAttribute("aria-pressed", String(active));
+function setTradeValueFilter(value) {
+  els.tradeValueButtons.forEach((button) => {
+    const active = Number(button.dataset.tradeValue) === value;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function getSelectedTradeValue() {
+  const selected = [...els.tradeValueButtons].find((button) => button.classList.contains("active"));
+  return selected ? Number(selected.dataset.tradeValue) : null;
+}
+
+function setToggle(button, active) {
+  button.classList.toggle("active", active);
+  button.setAttribute("aria-pressed", String(active));
 }
