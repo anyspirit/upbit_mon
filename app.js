@@ -441,6 +441,13 @@ function renderTradingView(symbol, label) {
     calendar: false,
     support_host: "https://www.tradingview.com",
     studies: ["MASimple@tv-basicstudies", "Volume@tv-basicstudies"],
+    studies_overrides: {
+      "moving average.length": 20,
+      "moving average.ma.color": "#f4c430",
+      "moving average.ma.linewidth": 2,
+      "moving average.plot.color.0": "#f4c430",
+      "moving average.plot.linewidth": 2,
+    },
   });
 
   els.tradingviewChart.appendChild(script);
