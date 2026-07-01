@@ -22,6 +22,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
+  font-size: 13px;
   font-family: Arial, "Noto Sans KR", sans-serif;
 }
 
@@ -54,7 +55,7 @@ a {
 .app-shell {
   width: min(1280px, calc(100% - 28px));
   margin: 0 auto;
-  padding: 24px 0 36px;
+  padding: 16px 0 28px;
 }
 
 .topbar,
@@ -77,7 +78,7 @@ a {
 }
 
 .topbar {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .eyebrow {
@@ -95,14 +96,14 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: 30px;
   line-height: 1.12;
   letter-spacing: 0;
 }
 
 h2 {
   margin-bottom: 0;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .panel,
@@ -122,10 +123,11 @@ h2 {
 }
 
 .tabs {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .tab {
+  min-height: 36px;
   padding: 0 18px;
   font-weight: 700;
 }
@@ -147,7 +149,7 @@ h2 {
 .workspace,
 .scanner-layout {
   align-items: stretch;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .scanner-layout {
@@ -156,34 +158,34 @@ h2 {
 }
 
 .panel {
-  padding: 18px;
+  padding: 14px;
 }
 
 .chart-panel {
   flex: 1;
   min-width: 0;
-  padding: 18px;
+  padding: 14px;
 }
 
 .chart-panel p,
 .result-head p,
 .notice {
-  margin: 5px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .notice {
-  margin: 0 0 14px;
-  padding: 11px 12px;
+  margin: 0 0 10px;
+  padding: 9px 10px;
   border-radius: 7px;
   background: var(--soft);
 }
 
 .chart-box {
   width: 100%;
-  height: 520px;
-  margin-top: 14px;
+  height: 460px;
+  margin-top: 10px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -192,10 +194,10 @@ h2 {
 
 label {
   display: grid;
-  gap: 7px;
-  margin-bottom: 12px;
+  gap: 5px;
+  margin-bottom: 9px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -203,7 +205,7 @@ input,
 select,
 textarea {
   width: 100%;
-  min-height: 42px;
+  min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 0 11px;
@@ -233,7 +235,11 @@ textarea:focus {
 .ma-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+}
+
+.ma-grid .filter-toggle:first-child {
+  grid-column: 1 / -1;
 }
 
 .primary {
@@ -250,14 +256,14 @@ textarea:focus {
 .filter-toggle,
 .segmented-control button {
   width: 100%;
+  min-height: 34px;
   font-weight: 700;
 }
 
-.filter-toggle span {
-  display: block;
-  margin-top: 4px;
+.filter-toggle small {
+  margin-left: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
 }
 
@@ -268,15 +274,15 @@ textarea:focus {
   color: #fff;
 }
 
-.filter-toggle.active span {
+.filter-toggle.active small {
   color: rgba(255, 255, 255, 0.78);
 }
 
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 9px;
 }
 
 .icon-button {
@@ -293,7 +299,7 @@ textarea:focus {
 }
 
 .result-head {
-  padding: 18px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -309,7 +315,7 @@ table {
 
 th,
 td {
-  padding: 12px 11px;
+  padding: 8px 9px;
   border-bottom: 1px solid var(--line);
   text-align: right;
   white-space: nowrap;
@@ -324,11 +330,11 @@ td:first-child {
 
 th {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 td {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 td small {
@@ -343,7 +349,7 @@ td small {
 
 .coin-name strong {
   overflow: hidden;
-  font-size: 14px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -351,7 +357,7 @@ td small {
 .coin-name span {
   overflow: hidden;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

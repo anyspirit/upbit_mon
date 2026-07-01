@@ -10,6 +10,7 @@ const HOUR_CANDLE_CACHE_MS = 20 * 60 * 1000;
 const DAY_CANDLE_CACHE_MS = 6 * 60 * 60 * 1000;
 const CONVERGENCE_PERIODS = [20, 60, 120, 240, 365];
 const CONVERGENCE_TOLERANCE = 0.05;
+const STABLE_SYMBOLS = new Set(["USDS", "USD1", "USDT", "USDC", "USDE"]);
 
 function resolveDataApiBase() {
   const params = new URLSearchParams(window.location.search);
@@ -147,6 +148,8 @@ async function loadMarkets() {
 
 function marketsForRule(rule) {
   return markets.filter((market) => {
+    const symbol = market.market.replace("KRW-", "").toUpperCase();
+    if (STABLE_SYMBOLS.has(symbol)) return false;
     const meta = coinDb[market.market] ?? {};
     const keywordTarget = `${market.market} ${market.korean_name} ${market.english_name} ${meta.nickname ?? ""}`.toLowerCase();
     const groupMatch = rule.coinGroup === "all" || (meta.groups ?? []).includes(rule.coinGroup);
