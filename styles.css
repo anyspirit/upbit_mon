@@ -157,6 +157,16 @@ h2 {
   grid-template-columns: minmax(320px, 0.3fr) minmax(0, 0.7fr);
 }
 
+.scanner-layout > .chart-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.scanner-layout > .panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .panel {
   padding: 14px;
 }
@@ -190,6 +200,10 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+}
+
+.chart-collapsed .chart-box {
+  display: none;
 }
 
 label {
@@ -577,11 +591,36 @@ td small {
     padding-top: 16px;
   }
 
+  .scanner-layout > .chart-panel,
+  .scanner-layout > .panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
   .panel {
     min-width: 0;
   }
 
   .chart-box {
-    height: 380px;
+    height: 300px;
+  }
+
+  .segmented-control {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ma-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ma-grid .filter-toggle:first-child {
+    grid-column: auto;
+  }
+
+  .filter-toggle,
+  .segmented-control button {
+    min-height: 38px;
+    padding: 0 6px;
+    font-size: 12px;
   }
 }

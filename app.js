@@ -52,6 +52,7 @@ const els = {
   sortBy: $("#sortBy"),
   searchButton: $("#searchButton"),
   resetButton: $("#resetButton"),
+  chartToggleButton: $("#chartToggleButton"),
   chartTitle: $("#chartTitle"),
   tradingviewChart: $("#tradingviewChart"),
   results: $("#results"),
@@ -529,6 +530,11 @@ function resetForm() {
   els.sortBy.value = "tradeValue";
 }
 
+function toggleChart() {
+  const collapsed = document.body.classList.toggle("chart-collapsed");
+  els.chartToggleButton.textContent = collapsed ? "차트 보기" : "차트 접기";
+}
+
 function setupTabs() {
   els.tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -725,6 +731,7 @@ function setLoading(active) {
 
 els.searchButton.addEventListener("click", searchNow);
 els.resetButton.addEventListener("click", resetForm);
+els.chartToggleButton.addEventListener("click", toggleChart);
 els.tradeValueButtons.forEach((button) => {
   button.addEventListener("click", () => setTradeValueFilter(Number(button.dataset.tradeValue)));
 });

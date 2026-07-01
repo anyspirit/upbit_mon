@@ -22,13 +22,22 @@
 
       <section class="tab-page active" id="scannerPage">
         <section class="scanner-layout">
+          <section class="chart-panel">
+            <div class="panel-head">
+              <div>
+                <h2 id="chartTitle">BTCUSDT 차트</h2>
+                <p>Binance 달러 기준 · 이동평균선과 거래량 참고</p>
+              </div>
+              <button id="chartToggleButton" type="button">차트 접기</button>
+            </div>
+            <div class="chart-box" id="tradingviewChart"></div>
+          </section>
+
           <aside class="panel">
             <div class="panel-head">
               <h2>검색 조건</h2>
               <button class="icon-button" id="resetButton" type="button" title="조건 초기화">↺</button>
             </div>
-
-            <p class="notice">검색 대상은 업비트 KRW 마켓입니다. 이동평균은 일봉 기준입니다.</p>
 
             <label>
               코인 그룹
@@ -91,16 +100,6 @@
               <button class="primary" id="searchButton" type="button">검색</button>
             </div>
           </aside>
-
-          <section class="chart-panel">
-            <div class="panel-head">
-              <div>
-                <h2 id="chartTitle">BTCUSDT 차트</h2>
-                <p>Binance 달러 기준 · 이동평균선과 거래량 참고</p>
-              </div>
-            </div>
-            <div class="chart-box" id="tradingviewChart"></div>
-          </section>
         </section>
 
         <section class="result-section">
