@@ -22,13 +22,13 @@
 
       <section class="tab-page active" id="scannerPage">
         <section class="scanner-layout">
-          <section class="chart-panel">
+          <section class="chart-panel" id="chartPanel">
             <div class="panel-head">
               <div>
                 <h2 id="chartTitle">BTCUSDT 차트</h2>
                 <p>Binance 달러 기준 · 이동평균선과 거래량 참고</p>
               </div>
-              <button id="chartToggleButton" type="button">차트 접기</button>
+              <button id="chartToggleButton" type="button" aria-expanded="true">차트 접기</button>
             </div>
             <div class="chart-box" id="tradingviewChart"></div>
           </section>
@@ -215,6 +215,6 @@
 
     <script src="./coin-data.js"></script>
     <script src="./memo-data.js"></script>
-    <script src="./app.js"></script>
+    <script src="./app.js" defer></script>
   </body>
 </html>

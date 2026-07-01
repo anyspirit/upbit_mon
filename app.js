@@ -52,6 +52,7 @@ const els = {
   sortBy: $("#sortBy"),
   searchButton: $("#searchButton"),
   resetButton: $("#resetButton"),
+  chartPanel: $("#chartPanel"),
   chartToggleButton: $("#chartToggleButton"),
   chartTitle: $("#chartTitle"),
   tradingviewChart: $("#tradingviewChart"),
@@ -531,8 +532,9 @@ function resetForm() {
 }
 
 function toggleChart() {
-  const collapsed = document.body.classList.toggle("chart-collapsed");
+  const collapsed = els.chartPanel.classList.toggle("collapsed");
   els.chartToggleButton.textContent = collapsed ? "차트 보기" : "차트 접기";
+  els.chartToggleButton.setAttribute("aria-expanded", String(!collapsed));
 }
 
 function setupTabs() {

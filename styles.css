@@ -202,7 +202,7 @@ h2 {
   background: #fff;
 }
 
-.chart-collapsed .chart-box {
+.chart-panel.collapsed .chart-box {
   display: none;
 }
 
