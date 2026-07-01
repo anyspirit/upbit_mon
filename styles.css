@@ -260,22 +260,11 @@ textarea:focus {
   font-weight: 700;
 }
 
-.filter-toggle small {
-  margin-left: 6px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 400;
-}
-
 .filter-toggle.active,
 .segmented-control button.active {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
-}
-
-.filter-toggle.active small {
-  color: rgba(255, 255, 255, 0.78);
 }
 
 .segmented-control {
@@ -301,6 +290,17 @@ textarea:focus {
 .result-head {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
+}
+
+.result-notes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 12px;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .table-wrap {

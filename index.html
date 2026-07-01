@@ -54,15 +54,12 @@
             <div class="ma-grid">
               <button class="filter-toggle" id="h1ConvergenceToggle" type="button" aria-pressed="false">
                 캔들수렴
-                <small>1시간 MA20/60/120/240/365 현재가 ±5%</small>
               </button>
               <button class="filter-toggle" id="conditionOneToggle" type="button" aria-pressed="false">
                 조건1
-                <small>20,60선위 골든크로스</small>
               </button>
               <button class="filter-toggle" id="uptrendToggle" type="button" aria-pressed="false">
                 상승추세
-                <small>조건1 + 일봉 MA20/60 위</small>
               </button>
             </div>
 
@@ -111,6 +108,11 @@
             <div>
               <h2>검색 결과</h2>
               <p id="resultMeta">아직 검색하지 않았습니다.</p>
+            </div>
+            <div class="result-notes" aria-label="검색 조건 설명">
+              <span>캔들 수렴 : 1시간봉 기준 MA20/60/120/240/365 현재가 +/-5%</span>
+              <span>조건1 : 20,60선위 골든크로스</span>
+              <span>상승추세 : 조건1 + 일봉 캔들이 MA20/60 위</span>
             </div>
           </div>
 
